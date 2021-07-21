@@ -1,7 +1,7 @@
 
 # react-device-detector
 
-Bare minimum device detector with no dependecy
+Bare minimum device detector with no dependecy,
 Renders components based on device
 # only 498B gziped
 

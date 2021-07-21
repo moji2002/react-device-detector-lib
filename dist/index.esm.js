@@ -1,6 +1,7 @@
 import React, { Fragment } from 'react';
 
 var getOS = function getOS() {
+  if (typeof window === "undefined") return;
   var userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
   if (/android/i.test(userAgent)) {
@@ -10,8 +11,6 @@ var getOS = function getOS() {
   if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
     return "iOS";
   }
-
-  return "unknown";
 };
 
 var isIOS = getOS() === "iOS";

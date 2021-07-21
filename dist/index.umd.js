@@ -9,6 +9,7 @@
   var React__default = /*#__PURE__*/_interopDefaultLegacy(React);
 
   var getOS = function getOS() {
+    if (typeof window === "undefined") return;
     var userAgent = navigator.userAgent || navigator.vendor || window.opera;
 
     if (/android/i.test(userAgent)) {
@@ -18,8 +19,6 @@
     if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
       return "iOS";
     }
-
-    return "unknown";
   };
 
   var isIOS = getOS() === "iOS";

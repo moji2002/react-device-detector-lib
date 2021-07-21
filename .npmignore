@@ -16,6 +16,7 @@ CVS
 npm-debug.log
 .npmrc
 public
+detector
 
 config.gypi
 package-lock.json

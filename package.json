@@ -1,6 +1,6 @@
 {
   "name": "react-device-detector",
-  "version": "1.6.4",
+  "version": "1.7.0",
   "main": "dist/index.cjs.js",
   "description": "React componant that renders based on device",
   "author": "mojtaba beheshti",

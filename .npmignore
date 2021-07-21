@@ -15,6 +15,7 @@ CVS
 .DS_Store
 npm-debug.log
 .npmrc
+public
 
 config.gypi
 package-lock.json

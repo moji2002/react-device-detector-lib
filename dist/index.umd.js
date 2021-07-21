@@ -1,8 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('react')) :
-  typeof define === 'function' && define.amd ? define(['exports', 'react'], factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global['react-device-detector'] = {}, global.React));
-}(this, (function (exports, React) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('react')) :
+  typeof define === 'function' && define.amd ? define(['react'], factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global['react-device-detector'] = factory(global.React));
+}(this, (function (React) { 'use strict';
 
   function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -31,14 +31,17 @@
     var children = _ref.children;
     return isAndroid && /*#__PURE__*/React__default['default'].createElement(React.Fragment, null, children);
   };
+
   var IOSView = function IOSView(_ref2) {
     var children = _ref2.children;
     return isIOS && /*#__PURE__*/React__default['default'].createElement(React.Fragment, null, children);
   };
+
   var MobileView = function MobileView(_ref3) {
     var children = _ref3.children;
     return isMobile && /*#__PURE__*/React__default['default'].createElement(React.Fragment, null, children);
   };
+
   var DesktopView = function DesktopView(_ref4) {
     var children = _ref4.children;
     return isDesktop && /*#__PURE__*/React__default['default'].createElement(React.Fragment, null, children);
@@ -47,20 +50,18 @@
   var returnLibrary = function returnLibrary() {
     return {
       DesktopView: DesktopView,
+      AndroidView: AndroidView,
+      IOSView: IOSView,
+      MobileView: MobileView,
       isMobile: isMobile,
       isIOS: isIOS,
-      isAndroid: isAndroid
+      isAndroid: isAndroid,
+      isDesktop: isDesktop
     };
   };
 
   var index = returnLibrary();
 
-  exports.AndroidView = AndroidView;
-  exports.DesktopView = DesktopView;
-  exports.IOSView = IOSView;
-  exports.MobileView = MobileView;
-  exports.default = index;
-
-  Object.defineProperty(exports, '__esModule', { value: true });
+  return index;
 
 })));

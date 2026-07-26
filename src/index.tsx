@@ -1,7 +1,14 @@
+'use client';
+
 /**
  * react-device-detector — render React components based on device type.
  *
- * Zero runtime dependencies. Works with React 17, 18 and 19.
+ * Zero runtime dependencies. React 17, 18 and 19.
+ *
+ * This entry is a CLIENT module: it uses hooks, so in the Next.js App Router it
+ * must carry the "use client" directive or importing it from a Server Component
+ * fails. The pure detection function lives in `react-device-detector/server`
+ * precisely so server code can use it without crossing this boundary.
  *
  * ## Why v2 changed
  *
@@ -10,100 +17,55 @@
  *     export const isIOS = getOS() === "iOS";   // v1, at import time
  *
  * During server rendering `window` is undefined, so every flag resolved to
- * "desktop" on the server and could resolve differently on the client — a React
- * hydration mismatch on every SSR page, silently. The values were also frozen
- * for the process lifetime and could never respond to anything.
- *
- * v2 detects inside a hook, so the server render and the first client render
- * always agree, and the real value lands right after hydration.
+ * "desktop" — the server sent desktop markup to everyone, phone users included,
+ * and the client then computed something different. A hydration mismatch on
+ * every SSR page. v2 detects inside a hook, so both renders agree.
  */
 
-import { useEffect, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react';
+import {
+  detectFromEnvironment,
+  UNKNOWN_DEVICE,
+  type DeviceInfo,
+} from './detect';
+
+export type { DeviceInfo, DetectionInput } from './detect';
+export { detectDevice, UNKNOWN_DEVICE } from './detect';
 
 /* ------------------------------------------------------------------------- *
- * Detection
+ * Provider (optional)
  * ------------------------------------------------------------------------- */
 
-export interface DeviceInfo {
-  /** Phone or tablet. */
-  isMobile: boolean;
-  /** Neither phone nor tablet. */
-  isDesktop: boolean;
-  isIOS: boolean;
-  isAndroid: boolean;
-  /** iPad, Android tablet, or another touch device with a large viewport. */
-  isTablet: boolean;
-  /** True until detection has run (server render and first client render). */
-  isDetecting: boolean;
+const DeviceContext = createContext<DeviceInfo | null>(null);
+
+export interface DeviceProviderProps {
+  children?: ReactNode;
+  /**
+   * A value computed on the server with `detectDevice()` from the request
+   * user-agent. Supplying it makes the FIRST paint correct instead of waiting
+   * for hydration.
+   *
+   * `DeviceInfo` is a plain object, so it passes cleanly from a Server
+   * Component to this client component as a prop.
+   */
+  value?: DeviceInfo;
 }
 
 /**
- * What the server and the first client render both see.
+ * Optional. Seeds device info so the first render is already accurate.
  *
- * `isDetecting: true` is the honest state: on the server there is no device to
- * inspect. Treating "unknown" as "desktop" is what made v1 wrong — consumers
- * who care should branch on `isDetecting` rather than assume.
+ * Without it, `useDevice()` self-detects after mount — correct, but one render
+ * late. With it, server and client agree immediately.
  */
-const UNKNOWN: DeviceInfo = {
-  isMobile: false,
-  isDesktop: false,
-  isIOS: false,
-  isAndroid: false,
-  isTablet: false,
-  isDetecting: true,
-};
-
-interface DetectionInput {
-  userAgent: string;
-  /** Touch points reported by the platform; iPadOS 13+ reports > 1. */
-  maxTouchPoints: number;
-  /** Present so a caller can pass a platform string from a server request. */
-  platform?: string;
-}
-
-/**
- * Pure detection. Exported so server code can compute a value from the request
- * user-agent and hand it to `DeviceProvider`, which is the only way to get an
- * accurate first paint under SSR.
- */
-export function detectDevice(input: DetectionInput): DeviceInfo {
-  const ua = input.userAgent || '';
-  const touchPoints = input.maxTouchPoints || 0;
-
-  const isAndroid = /android/i.test(ua);
-  const androidTablet = isAndroid && !/mobile/i.test(ua);
-
-  const iPhoneOrIPod = /iPhone|iPod/i.test(ua);
-  const legacyIPad = /iPad/i.test(ua);
-
-  // iPadOS 13+ ships a desktop-class Safari that identifies as "Macintosh".
-  // The only reliable tell is that a Mac reports 0 touch points while an iPad
-  // reports 5. v1's /iPad|iPhone|iPod/ test classified every modern iPad as a
-  // desktop.
-  const modernIPad = /Macintosh/i.test(ua) && touchPoints > 1;
-
-  const isIPad = legacyIPad || modernIPad;
-  const isIOS = iPhoneOrIPod || isIPad;
-  const isTablet = isIPad || androidTablet;
-  const isMobile = isIOS || isAndroid;
-
-  return {
-    isMobile,
-    isDesktop: !isMobile,
-    isIOS,
-    isAndroid,
-    isTablet,
-    isDetecting: false,
-  };
-}
-
-/** Read the current environment. Returns null when there is no DOM. */
-function detectFromEnvironment(): DeviceInfo | null {
-  if (typeof navigator === 'undefined') return null;
-  return detectDevice({
-    userAgent: navigator.userAgent,
-    maxTouchPoints: navigator.maxTouchPoints ?? 0,
-  });
+export function DeviceProvider({ children, value }: DeviceProviderProps) {
+  const detected = useDeviceInternal(value);
+  return <DeviceContext.Provider value={detected}>{children}</DeviceContext.Provider>;
 }
 
 /* ------------------------------------------------------------------------- *
@@ -113,24 +75,20 @@ function detectFromEnvironment(): DeviceInfo | null {
 let injected: DeviceInfo | null = null;
 
 /**
- * Supply a value computed on the server (see `detectDevice`) so the first paint
- * is already correct instead of waiting for hydration.
+ * Seed device info for code that renders entirely on the client.
  *
- * Call once, before render — typically at the top of a server entry file.
+ * @deprecated Prefer `<DeviceProvider value={…}>`. This sets a module-level
+ * variable, which works within a single client bundle but cannot cross the
+ * React Server Component boundary — a Server Component calling it would be
+ * mutating a different module instance than the one your components read.
+ * The provider takes a plain object as a prop, which does cross that boundary.
  */
 export function setServerDevice(info: DeviceInfo | null): void {
   injected = info;
 }
 
-/**
- * Current device information.
- *
- * Returns `isDetecting: true` on the server and during the first client render,
- * then the real value. That ordering is deliberate: rendering the same thing on
- * both sides is what prevents the hydration mismatch v1 produced.
- */
-export function useDevice(): DeviceInfo {
-  const [info, setInfo] = useState<DeviceInfo>(() => injected ?? UNKNOWN);
+function useDeviceInternal(seed?: DeviceInfo): DeviceInfo {
+  const [info, setInfo] = useState<DeviceInfo>(() => seed ?? injected ?? UNKNOWN_DEVICE);
 
   useEffect(() => {
     const detected = detectFromEnvironment();
@@ -138,6 +96,21 @@ export function useDevice(): DeviceInfo {
   }, []);
 
   return info;
+}
+
+/**
+ * Current device information.
+ *
+ * Returns `isDetecting: true` on the server and during the first client render,
+ * then the real value. Rendering the same thing on both sides is what prevents
+ * the hydration mismatch v1 produced.
+ */
+export function useDevice(): DeviceInfo {
+  const fromContext = useContext(DeviceContext);
+  const standalone = useDeviceInternal();
+  // A provider higher in the tree has already detected; reuse it rather than
+  // running a second effect per consumer.
+  return fromContext ?? standalone;
 }
 
 /* ------------------------------------------------------------------------- *
@@ -158,8 +131,8 @@ function makeView(match: (info: DeviceInfo) => boolean) {
   return function View({ children, renderWhileDetecting = false }: ViewProps) {
     const info = useDevice();
     if (info.isDetecting) return renderWhileDetecting ? <>{children}</> : null;
-    // Returning null rather than `false` — v1 returned the boolean itself,
-    // which React tolerates but types awkwardly.
+    // Returns null rather than `false` — v1 returned the boolean itself, which
+    // React tolerates but types awkwardly.
     return match(info) ? <>{children}</> : null;
   };
 }
@@ -170,18 +143,14 @@ export const AndroidView = makeView((d) => d.isAndroid);
 export const IOSView = makeView((d) => d.isIOS);
 export const TabletView = makeView((d) => d.isTablet);
 
-/* ------------------------------------------------------------------------- *
- * Default export (v1 API shape)
- * ------------------------------------------------------------------------- */
-
 const api = {
   MobileView,
   DesktopView,
   AndroidView,
   IOSView,
   TabletView,
+  DeviceProvider,
   useDevice,
-  detectDevice,
   setServerDevice,
 };
 

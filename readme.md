@@ -37,6 +37,59 @@ const MyComponent = () => {
 };
 ```
 
+## Next.js (App Router)
+
+The main entry is a **client module** — it uses hooks, so it ships the
+`"use client"` directive. You can import the components straight into a Server
+Component and they work:
+
+```tsx
+// app/page.tsx — a Server Component
+import { MobileView, DesktopView } from "react-device-detector";
+
+export default function Page() {
+  return (
+    <>
+      <MobileView>phone nav</MobileView>
+      <DesktopView>desktop nav</DesktopView>
+    </>
+  );
+}
+```
+
+For a **correct first paint** — no waiting for hydration — detect on the server
+from the request user-agent and pass the result down. The pure detector lives at
+`react-device-detector/server`, which carries no `"use client"`, so it is safe to
+call from server code:
+
+```tsx
+// app/layout.tsx
+import { headers } from "next/headers";
+import { detectDevice } from "react-device-detector/server";
+import { DeviceProvider } from "react-device-detector";
+
+export default async function Layout({ children }) {
+  const ua = (await headers()).get("user-agent") ?? "";
+  const device = detectDevice({ userAgent: ua, maxTouchPoints: 0 });
+
+  return (
+    <html>
+      <body>
+        <DeviceProvider value={device}>{children}</DeviceProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+`DeviceInfo` is a plain object of booleans, so it serializes cleanly across the
+Server/Client Component boundary.
+
+> Note: header-based detection cannot see `maxTouchPoints`, so an iPadOS 13+
+> device looks like a Mac to the server. The client corrects it immediately
+> after hydration. If iPad accuracy on first paint matters, use
+> `<DesktopView renderWhileDetecting={false}>` and let the client decide.
+
 ## ⚠️ Upgrading from v1
 
 v1 had two bugs serious enough to require a breaking change.

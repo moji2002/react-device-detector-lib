@@ -1,6 +1,6 @@
 {
   "name": "react-device-detector",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Render React components based on device type. SSR-safe, correct iPadOS detection, zero runtime dependencies.",
   "author": "mojtaba beheshti",
   "license": "MIT",
@@ -13,7 +13,13 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    }
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
@@ -25,8 +31,8 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "tsup src/index.tsx --format cjs,esm --clean && pnpm run build:dts",
-    "build:dts": "tsc -p tsconfig.dts.json && node -e \"require('fs').copyFileSync('dist/index.d.ts','dist/index.d.cts')\"",
+    "build": "tsup && pnpm run build:dts && node scripts/add-use-client.mjs",
+    "build:dts": "tsc -p tsconfig.dts.json && node scripts/copy-dts.mjs",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run build && node --test test/",
     "test:unit": "node --test test/",

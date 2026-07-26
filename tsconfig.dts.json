@@ -1,0 +1,12 @@
+// Declaration-only emit. TypeScript 7 removed the legacy JS compiler API, so
+// tsup's --dts (which drives rollup-plugin-dts through it) cannot run.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": false,
+    "outDir": "./dist"
+  },
+  "include": ["src/index.tsx"]
+}

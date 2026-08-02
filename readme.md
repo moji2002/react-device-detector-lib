@@ -1,15 +1,25 @@
 # react-device-detector
 
+[![npm](https://img.shields.io/npm/v/react-device-detector?style=flat-square)](https://www.npmjs.com/package/react-device-detector)
+[![React](https://img.shields.io/badge/React-17%E2%80%9319-149eca?style=flat-square)](https://react.dev/)
+[![runtime dependencies](https://img.shields.io/badge/runtime_deps-0-f05a28?style=flat-square)](package.json)
+[![license](https://img.shields.io/npm/l/react-device-detector?style=flat-square)](LICENSE)
+
 Render React components based on device type. **SSR-safe**, correct **iPadOS**
 detection, **zero runtime dependencies**, TypeScript types included.
 
 Works with React 17, 18 and 19.
 
+[npm](https://www.npmjs.com/package/react-device-detector) ·
+[Project notes](https://worksonmy.dev/projects/react-device-detector) ·
+[Source](https://github.com/moji2002/react-device-detector-lib) ·
+[Issues](https://github.com/moji2002/react-device-detector-lib/issues)
+
 ```bash
 npm install react-device-detector
 ```
 
-## Usage
+## Quick start
 
 ```tsx
 import { MobileView, DesktopView, IOSView, AndroidView, TabletView } from "react-device-detector";
@@ -152,6 +162,10 @@ published entry points and React server rendering. In a Next.js application,
 keep a real `next build` in CI as the authoritative React Server Component
 boundary check.
 
+Runnable source:
+[device classification](test/consumer-device.test.mjs) and
+[server-seeded first paint](test/consumer-first-paint.test.mjs).
+
 ## ⚠️ Upgrading from v1
 
 v1 had two bugs serious enough to require a breaking change.
@@ -211,7 +225,7 @@ packages as **peer dependencies** — build and test tooling that leaked in from
 the Create React App scaffold, and which every consumer was asked to install.
 v2's only peer is `react`.
 
-## The detection gap, stated plainly
+## Limitations and the detection gap
 
 **A component cannot know the device during server rendering.** There is no
 device to inspect, only an HTTP request. Views therefore render `null` until

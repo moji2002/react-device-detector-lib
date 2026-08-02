@@ -90,6 +90,68 @@ Server/Client Component boundary.
 > after hydration. If iPad accuracy on first paint matters, use
 > `<DesktopView renderWhileDetecting={false}>` and let the client decide.
 
+## Testing in your project
+
+Test server detection through the pure `/server` entry so your test does not
+need a DOM:
+
+```js
+import test from "node:test";
+import assert from "node:assert/strict";
+import { detectDevice } from "react-device-detector/server";
+
+test("detects an iPhone request", () => {
+  const device = detectDevice({
+    userAgent:
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) " +
+      "AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
+    maxTouchPoints: 5,
+  });
+
+  assert.equal(device.isIOS, true);
+  assert.equal(device.isMobile, true);
+  assert.equal(device.isTablet, false);
+  assert.equal(device.isDetecting, false);
+});
+```
+
+For SSR behavior, render a server-derived value through `DeviceProvider` and
+assert the first HTML response. Also pin the unseeded behavior: it renders no
+device-specific guess while detection is pending.
+
+```js
+import test from "node:test";
+import assert from "node:assert/strict";
+import { createElement as h } from "react";
+import { renderToString } from "react-dom/server";
+import { DeviceProvider, DesktopView, MobileView } from "react-device-detector";
+import { detectDevice } from "react-device-detector/server";
+
+test("renders a server-seeded mobile first paint", () => {
+  const device = detectDevice({
+    userAgent: "Mozilla/5.0 (Linux; Android 13; Pixel 7) Mobile Safari/537.36",
+    maxTouchPoints: 5,
+  });
+  const html = renderToString(
+    h(DeviceProvider, { value: device },
+      h(MobileView, null, "PHONE-NAV"),
+      h(DesktopView, null, "DESKTOP-NAV")),
+  );
+
+  assert.match(html, /PHONE-NAV/);
+  assert.doesNotMatch(html, /DESKTOP-NAV/);
+});
+
+test("does not guess before unseeded detection", () => {
+  assert.equal(renderToString(h(MobileView, null, "PHONE-NAV")), "");
+});
+```
+
+Run the repository copies with `pnpm test:example`. These tests exercise the
+published entry points and React server rendering. In a Next.js application,
+keep a real `next build` in CI as the authoritative React Server Component
+boundary check.
+
 ## ⚠️ Upgrading from v1
 
 v1 had two bugs serious enough to require a breaking change.

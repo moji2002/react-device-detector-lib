@@ -1,6 +1,6 @@
 {
   "name": "react-device-detector",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Render React components based on device type. SSR-safe, correct iPadOS detection, zero runtime dependencies.",
   "author": "Mojtaba Beheshti <it@worksonmy.dev>",
   "license": "MIT",
@@ -34,8 +34,9 @@
     "build": "tsup && pnpm run build:dts && node scripts/add-use-client.mjs",
     "build:dts": "tsc -p tsconfig.dts.json && node scripts/copy-dts.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "pnpm run build && node --test test/",
-    "test:unit": "node --test test/",
+    "test": "pnpm run build && node --test test/detect.test.js test/nextjs-boundary.test.js test/ssr.test.js test/consumer-device.test.mjs test/consumer-first-paint.test.mjs",
+    "test:example": "pnpm run build && node --test test/consumer-device.test.mjs test/consumer-first-paint.test.mjs",
+    "test:unit": "node --test test/detect.test.js test/nextjs-boundary.test.js test/ssr.test.js",
     "prepublishOnly": "pnpm run test"
   },
   "keywords": [

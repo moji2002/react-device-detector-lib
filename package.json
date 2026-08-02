@@ -2,7 +2,7 @@
   "name": "react-device-detector",
   "version": "2.1.0",
   "description": "Render React components based on device type. SSR-safe, correct iPadOS detection, zero runtime dependencies.",
-  "author": "mojtaba beheshti",
+  "author": "Mojtaba Beheshti <it@worksonmy.dev>",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.cjs",
@@ -67,10 +67,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/moji2002/react-device-detector.git"
+    "url": "git+https://github.com/moji2002/react-device-detector-lib.git"
   },
-  "homepage": "https://github.com/moji2002/react-device-detector#readme",
+  "homepage": "https://github.com/moji2002/react-device-detector-lib#readme",
   "bugs": {
-    "url": "https://github.com/moji2002/react-device-detector/issues"
+    "url": "https://github.com/moji2002/react-device-detector-lib/issues"
   }
 }
